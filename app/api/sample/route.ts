@@ -2,12 +2,11 @@ import { OpenAI } from "openai";
 import { exec } from "child_process";
 import ytdl from "ytdl-core";
 import fs from 'fs';
-import { NextResponse } from "next/server";
+import { NextResponse } from "next/server"
 // Promisify the exec function from child_process
 const util = require('util');
 const execAsync = util.promisify(exec);
 
-const youtubeUrl = 'https://www.youtube.com/watch?v=QOczdBlT2v4';
 
 const openai = new OpenAI.OpenAI({
     apiKey: process.env.OPENAI_API_KEY
@@ -15,7 +14,9 @@ const openai = new OpenAI.OpenAI({
 
 export async function GET(request: Request) {
     try {
-        const finalRes = await getTranscribeText();
+        const body = request.body 
+        // @ts-ignore
+        const finalRes = await getTranscribeText(body.url || "");
         
         if (finalRes) fs.unlinkSync('./temp/output.mp3')
 
@@ -55,7 +56,7 @@ const downloadAudio = async (url: string, outputFilePath: any) => {
     });
 };
 
-async function convertToMp3(inputFilePath: string) {
+async function convertToMp3(inputFilePath: string, youtubeUrl: string) {
     await downloadAudio(youtubeUrl, './temp/temp.mp4');
     console.log('Audio downloaded successfully');
 
@@ -70,8 +71,8 @@ async function convertToMp3(inputFilePath: string) {
     return mp3AudioData;
 }
 
-async function getTranscribeText() {
-    const mp3AudioData = await convertToMp3('./temp/temp.mp4')
+async function getTranscribeText(youtubeUrl: string) {
+    const mp3AudioData = await convertToMp3('./temp/temp.mp4', youtubeUrl)
     // Write the MP3 audio data to a file
     const outputPath = './temp/output.mp3';
     fs.writeFileSync(outputPath, mp3AudioData);
